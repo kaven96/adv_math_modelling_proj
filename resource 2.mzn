@@ -9,13 +9,35 @@ include "globals.mzn";
 int: res = 750;
 int: srok = 120;
 
-int: res_max = 1200;
-int: srok_max = 150;
+var int: res_max;
+
+constraint
+res_max <= 1200 /\ res_max >= 1000;
+
+var int: srok_max = 144;
+
+constraint
+srok_max >= 140 /\ srok_max <= 152;
+
 int: res_incr = 20; % operation time increment per month
-int: rem_time = 8; 
+
+var int: rem_time; 
+
+constraint
+rem_time <= 14 /\ rem_time >= 8;
+
+float: res_incr_price = 0.01; % per 1 h of res increase
+int: rem_time_decr = 5; % per 1 month of repair of time decrease
+int: srok_max_incr = 2; % per 1 month of expl time incr
+int: stay_decr = 10; % per 1 machine staying decrease
+float: res_unused = 0.03; % penalty for unused 1h of op_time
 
 int: n = 15;
 set of int: dev = 1..n;
+var int: stay;
+
+constraint
+stay >= 4 /\ stay <= 10;
 
 array[dev] of int: op_time = [300, 250, 350, 450, 650, 670, 660, 220, 250, 670, 190, 560, 340, 370, 360]; % at the moment when 10 years expire
 
@@ -35,33 +57,31 @@ forall(i in dev)(rem_date[i] <= srok_max + prod_date[i] /\ rem_date[i] >= srok  
 constraint
 forall(i in rem_date, j in op_time)((i - srok)*res_incr + j <= res_max);
 
-% constraint
-% card({rem_date[i] | i in dev where rem_date[i] > 146 /\ rem_date[i] <= 158}) <= 5;
-
-% constraint
-% card({rem_date[i] | i in dev where rem_date[i] > 134 /\ rem_date[i] <= 146}) <= 5;
-
-% constraint
-% card({rem_date[i] | i in dev where rem_date[i] > 122 /\ rem_date[i] <= 134}) <= 5;
-
 constraint
 forall(i in dev)(return_date[i] = rem_date[i] + rem_time);
 
-% constraint
-% forall(i in 120..158)(card({rem_date[j] | j in dev where rem_date[j] <= i \/ return_date[j] >= i+12}) >=10);
-
 constraint
-forall(i in dev)(card({rem_date[j] | j in dev where return_date[i] <= rem_date[j]+12})>=5);
+forall(i in dev)(card({rem_date[j] | j in dev where return_date[i] <= rem_date[j]+12})>=stay);
 
 constraint
 forall(i in dev)(rem_res[i] = op_time[i] + (rem_date[i] - srok)*res_incr);
+
+
+array[dev] of var float: res_penalty;
+
+constraint
+forall(i in dev)(res_penalty[i] = (rem_res[i]-res)*res_incr_price);
+
+
+% constraint
+% forall(i in dev)(if rem_res[i]<=res then res_penalty[i] = (res-rem_res[i])*res_unused else res_penalty[i] = (rem_res[i]-res)*res_incr_price endif);
 
 solve satisfy;
 
 % solve maximize sum(i in dev)(rem_res[i]);
 
 output [
-show(rem_date), show(return_date)
+show(rem_date), show(res_penalty)
 ]
 
 % для каждого месяца между 120 и 134 (или больше) проверяем, находится ли вертолет на месте (то есть текущий месяц меньше, чем 
