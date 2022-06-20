@@ -9,10 +9,7 @@ include "globals.mzn";
 int: res = 750;
 int: srok = 120;
 
-var int: res_max;
-
-constraint
-res_max <= 1200 /\ res_max >= 1000;
+int: res_max = 1000;
 
 var int: srok_max;
 
@@ -26,11 +23,11 @@ var int: rem_time;
 constraint
 rem_time <= 14 /\ rem_time >= 8;
 
-float: res_incr_price = 0.01; % per 1 h of res increase
-int: rem_time_decr = 5; % per 1 month of repair of time decrease
-int: srok_max_incr = 2; % per 1 month of expl time incr
-int: stay_decr = 10; % per 1 machine staying decrease
-float: res_unused = 0.03; % penalty for unused 1h of op_time
+float: res_incr_price = 1; % per 1 h of res increase
+int: rem_time_decr = 500; % per 1 month of repair of time decrease
+int: srok_max_incr = 200; % per 1 month of expl time incr
+int: stay_decr = 1000; % per 1 machine staying decrease
+float: res_unused = 3; % penalty for unused 1h of op_time
 
 int: n = 15;
 set of int: dev = 1..n;
@@ -46,8 +43,6 @@ array[dev] of int: prod_date = [11, 0, 14, 0, 0, 2, 2, 2, 4, 4, 4, 5, 9, 9, 14];
 array[dev] of var int: rem_date;
 
 array[dev] of var int: return_date;
-
-% array[dev] of var int: rd_sort = sort(rem_date);
 
 array[dev] of var int: rem_res;
 
@@ -67,29 +62,39 @@ constraint
 forall(i in dev)(rem_res[i] = op_time[i] + (rem_date[i] - srok)*res_incr);
 
 
-array[dev] of var float: res_penalty;
+array[dev] of var int: res_penalty;
 
-array[dev] of var float: srok_penalty;
+array[dev] of var int: srok_penalty;
+
+var int: stay_penalty;
+
+var int: final_penalty;
 
 constraint
-forall(i in dev)(srok_penalty[i] = (rem_date[i]-140)*srok_max_incr);
+forall(i in dev)(if rem_date[i] >= 144 then srok_penalty[i] = (rem_date[i]-144)*srok_max_incr else srok_penalty[i] = 0 endif);
 
-% constraint
-% forall(i in dev)(res_penalty[i] = (res-rem_res[i])*res_unused);
+constraint
+forall(i in dev)(if rem_res[i] >= 750 then res_penalty[i] = (rem_res[i]-res)*res_incr_price else res_penalty[i] = (res - rem_res[i])*res_unused endif);
 
+constraint
+if stay < 5 then stay_penalty = (5 - stay)*stay_decr else stay_penalty = 0 endif;
+% пенатьлти за время ремонта и ремонт для каждого свой!
+constraint
+final_penalty = sum(i in dev)(srok_penalty[i]+res_penalty[i]);
 
-% constraint
-% forall(i in dev)(if rem_res[i]<=res then res_penalty[i] = (res-rem_res[i])*res_unused else res_penalty[i] = (rem_res[i]-res)*res_incr_price endif);
+var int: fin_fin_penal = final_penalty + stay_penalty;
 
-solve satisfy;
+solve :: int_search(rem_date, dom_w_deg, indomain_median)
+  minimize fin_fin_penal;
 
-% solve maximize sum(i in dev)(rem_res[i]);
+set of int: month = 110..164;
 
 output [
-show(rem_date)
-]
+  show(fix(fin_fin_penal))] ++ [
 
-% для каждого месяца между 120 и 134 (или больше) проверяем, находится ли вертолет на месте (то есть текущий месяц меньше, чем 
-% месяц отправки, либо больше месяца возвращения).
-% такх вертолетов должно быть не меньше 5 штук
+  if j >= fix(rem_date[i]) /\ j <= fix(return_date[i]) then "#" else "|" endif 
+  | i in dev, j in month
+
+] ++ ["\n"]
+
   

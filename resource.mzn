@@ -30,7 +30,7 @@ array[dev] of var int: return_date;
 array[dev] of var int: rem_res;
 
 constraint
-forall(i in dev)(rem_date[i] <= srok_max + prod_date[i] /\ rem_date[i] >= srok  + prod_date[i]);
+forall(i in dev)(rem_date[i] <= srok_max + prod_date[i] /\ rem_date[i] >= srok  + prod_date[i] - 3);
 
 constraint
 forall(i in rem_date, j in op_time)((i - srok)*res_incr + j <= res_max);
@@ -61,7 +61,7 @@ solve satisfy;
 % solve maximize sum(i in dev)(rem_res[i]);
 
 output [
-show(rem_date), show(return_date)
+show(rem_date), show(rem_res)
 ]
 
 % для каждого месяца между 120 и 134 (или больше) проверяем, находится ли вертолет на месте (то есть текущий месяц меньше, чем 
