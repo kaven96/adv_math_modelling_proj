@@ -141,6 +141,7 @@ solve
 %      warm_start( stay, 3 ),
                         ])
    :: int_search(rem_date, input_order, indomain_min)
+%    :: restart_luby(1000)
     minimize fin_fin_penal;
 
 
