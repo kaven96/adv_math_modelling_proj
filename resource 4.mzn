@@ -127,21 +127,17 @@ fin_fin_penal = final_penalty + stay_penalty;
 %%% Solve
 
 solve
-  :: warm_start_array( [                     %%% Can be on the upper level
-     warm_start( rem_date, [128, 132, 131, 117, 117, 128, 119, 119, 121, 121, 121, 122, 126, 126, 131] ),               %%% Use <> for missing values
+  :: warm_start_array( [                     [4000, 4000, 0, 4000, 4000, 4000, 4000, 4000, 0, 0, 2000, 0, 4000, 4000, 0]
+     warm_start( rem_date, [128, 132, 131, 117, 117, 128, 119, 119, 121, 121, 121, 122, 126, 126, 131] ),               
      warm_start( rem_time, [10, 10, 12, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 12] ),
      warm_start( return_date, [138, 142, 143, 127, 127, 138, 129, 129, 131, 131, 131, 132, 136, 136, 143] ),
      warm_start( rem_res, [460, 490, 570, 390, 590, 830, 640, 200, 270, 690, 210, 600, 460, 490, 580] ),
      warm_start(res_penalty, [870, 780, 540, 1080, 480, 80, 330, 1650, 1440, 180, 1620, 450, 870, 780, 510] ),
      warm_start(srok_penalty, [0, 2400, 0, 0, 0, 1200, 0, 0, 0, 0, 0, 0, 0, 0, 0] ),
-%      warm_start(stay_penalty, 0 ),
-%      warm_start(final_penalty, 67260 ),
      warm_start(rem_time_penalty, [4000, 4000, 0, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 0] ),
-%      warm_start(fin_fin_penal, 67260 ),
-%      warm_start( stay, 3 ),
                         ])
    :: int_search(rem_date, input_order, indomain_min)
-%    :: restart_luby(1000)
+   :: restart_luby(1000)
     minimize fin_fin_penal;
 
 
